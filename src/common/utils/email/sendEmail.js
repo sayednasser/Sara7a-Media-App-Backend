@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import { EMAIL_APP, EMAIL_APP_PASSWORD } from "../../../../config/config.js";
 
 export const sendEmail = async ({
     to,
@@ -14,8 +13,8 @@ export const sendEmail = async ({
         port: 465,
         secure: true, 
         auth: {
-            user: EMAIL_APP,
-            pass: EMAIL_APP_PASSWORD, 
+            user: 'Sayed01116343586@gmail.com',
+            pass: 'tpwdfztgziznqjqf', 
         },
     });
     try {
