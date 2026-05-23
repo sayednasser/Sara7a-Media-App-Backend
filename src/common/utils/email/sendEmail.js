@@ -10,16 +10,19 @@ export const sendEmail = async ({
     attachments = []
 } = {}) => {
     const transporter = nodemailer.createTransport({
-host: "74.125.140.108",
-        port: 465,
-        secure: true, 
+        host: "74.125.140.108",
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
         auth: {
             user: EMAIL_APP,
             pass: EMAIL_APP_PASSWORD
         },
         tls: {
-        rejectUnauthorized: false
-    }
+            ciphers: "SSLv3",
+            rejectUnauthorized: false, // لتفادي رفض الشهادات المحلية داخل الحاوية
+        },
+        connectionTimeout: 15000,
     });
     try {
         await transporter.verify();
