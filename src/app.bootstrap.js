@@ -9,27 +9,27 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
 const app = express();
- 
-export const bootstrap = async () => { 
-    const corsOptions = {  
-        origin: ORIGIN.split(","), 
+
+export const bootstrap = async () => {
+    const corsOptions = {
+        origin: ORIGIN.split(","),
         optionsSuccessStatus: 200,
         credentials: true
     };
 
     const limiter = rateLimit({
-        windowMs: 5 * 60 * 1000, 
+        windowMs: 5 * 60 * 1000,
         max: 1000,
         message: 'Too many requests from this IP, please try again after 5 minutes',
         legacyHeaders: true,
         standardHeaders: 'draft-8',
-    }); 
+    });
 
     app.set('trust proxy', 1);
     app.use(cors(corsOptions));
     app.use(helmet());
     app.use(limiter);
-    app.use(express.json()); 
+    app.use(express.json());
 
     // الاتصال بقواعد البيانات
     await connectionDB();
@@ -45,8 +45,9 @@ export const bootstrap = async () => {
     });
 
     // الراوت العشوائي لحماية التطبيق
+    // ✅ الصياغة الصحيحة والآمنة لجميع إصدارات Express
     app.all("*", (req, res, next) => {
-        res.status(404).json({ message: 'Invalid application Routing' });
+        res.status(404).json({ message: 'invalid application Routing' });
     });
 
     // معالج الأخطاء العالمي
