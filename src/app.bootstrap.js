@@ -1,9 +1,72 @@
+// import express from "express";
+// import { authRouter, messageRouter, userRouter } from "./module/index.js";
+// import { connectionDB } from "./DB/connection.DB.js";
+// import { GlobalErrorHandler } from "./middleware/error.middleware.js";
+// import { connectionRedis } from "./DB/redis.connection.js";
+// import { ORIGIN } from "../config/config.js"; // 💡 تم إزالة PORT من هنا لمنع تضارب الأسماء
+// import cors from "cors";
+// import helmet from "helmet";
+// import rateLimit from "express-rate-limit";
+
+// const app = express();
+
+// export const bootstrap = async () => {
+//     process.on("uncaughtException", (err) => {
+//         console.error("uncaughtException:", err);
+//     });
+
+//     process.on("unhandledRejection", (reason) => {
+//         console.error("unhandledRejection:", reason);
+//     });
+//     const corsOptions = {
+//         origin: ORIGIN.split(","),
+//         optionsSuccessStatus: 200,
+//         credentials: true
+//     };
+
+//     const limiter = rateLimit({
+//         windowMs: 5 * 60 * 1000,
+//         max: 1000,
+//         message: 'Too many requests from this IP, please try again after 5 minutes',
+//         legacyHeaders: true,
+//         standardHeaders: 'draft-8',
+//     });
+
+//     app.set('trust proxy', 1);
+//     app.use(cors(corsOptions));
+//     app.use(helmet());
+//     app.use(limiter);
+//     app.use(express.json());
+
+//     // الاتصال بقواعد البيانات
+//     await connectionDB();
+//     await connectionRedis();
+
+//     // الراوتس الأساسية
+//     app.use("/user", userRouter);
+//     app.use("/message", messageRouter);
+//     app.use("/auth", authRouter);
+
+//     app.get("/", (req, res, next) => {
+//         res.send("Hello World! Server is stable and live. 🚀");
+//     });
+
+
+
+//     app.use(GlobalErrorHandler);
+
+//     // 💡 الحل الحاسم: قراءة بورت Railway الديناميكي أو الإجباري (5000) بشكل صحيح
+//     const appPort = process.env.PORT || 5000;
+
+//     app.listen(appPort, "0.0.0.0", () => {
+//         console.log(`✔😎 Server is perfectly running on port ${appPort}`);
+//     });
+// };
 import express from "express";
 import { authRouter, messageRouter, userRouter } from "./module/index.js";
 import { connectionDB } from "./DB/connection.DB.js";
 import { GlobalErrorHandler } from "./middleware/error.middleware.js";
 import { connectionRedis } from "./DB/redis.connection.js";
-import { ORIGIN } from "../config/config.js"; // 💡 تم إزالة PORT من هنا لمنع تضارب الأسماء
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -11,54 +74,78 @@ import rateLimit from "express-rate-limit";
 const app = express();
 
 export const bootstrap = async () => {
-    process.on("uncaughtException", (err) => {
-        console.error("uncaughtException:", err);
-    });
+    try {
 
-    process.on("unhandledRejection", (reason) => {
-        console.error("unhandledRejection:", reason);
-    });
-    const corsOptions = {
-        origin: ORIGIN.split(","),
-        optionsSuccessStatus: 200,
-        credentials: true
-    };
+        // Handle unexpected errors
+        process.on("uncaughtException", (err) => {
+            console.error("uncaughtException:", err);
+        });
 
-    const limiter = rateLimit({
-        windowMs: 5 * 60 * 1000,
-        max: 1000,
-        message: 'Too many requests from this IP, please try again after 5 minutes',
-        legacyHeaders: true,
-        standardHeaders: 'draft-8',
-    });
+        process.on("unhandledRejection", (reason) => {
+            console.error("unhandledRejection:", reason);
+        });
 
-    app.set('trust proxy', 1);
-    app.use(cors(corsOptions));
-    app.use(helmet());
-    app.use(limiter);
-    app.use(express.json());
+        process.on("SIGTERM", () => {
+            console.log("SIGTERM RECEIVED");
+        });
 
-    // الاتصال بقواعد البيانات
-    await connectionDB();
-    await connectionRedis();
+        // CORS Options
+        const corsOptions = {
+            origin: process.env.ORIGIN
+                ? process.env.ORIGIN.split(",")
+                : "*",
+            optionsSuccessStatus: 200,
+            credentials: true
+        };
 
-    // الراوتس الأساسية
-    app.use("/user", userRouter);
-    app.use("/message", messageRouter);
-    app.use("/auth", authRouter);
+        // Rate Limiter
+        const limiter = rateLimit({
+            windowMs: 5 * 60 * 1000,
+            max: 1000,
+            message:
+                "Too many requests from this IP, please try again after 5 minutes",
+            legacyHeaders: true,
+            standardHeaders: "draft-8",
+        });
 
-    app.get("/", (req, res, next) => {
-        res.send("Hello World! Server is stable and live. 🚀");
-    });
+        app.set("trust proxy", 1);
 
+        // Middlewares
+        app.use(cors(corsOptions));
+        app.use(helmet());
+        app.use(limiter);
+        app.use(express.json());
 
+        // Database Connections
+        await connectionDB();
+        await connectionRedis();
 
-    app.use(GlobalErrorHandler);
+        // Routes
+        app.use("/user", userRouter);
+        app.use("/message", messageRouter);
+        app.use("/auth", authRouter);
 
-    // 💡 الحل الحاسم: قراءة بورت Railway الديناميكي أو الإجباري (5000) بشكل صحيح
-    const appPort = process.env.PORT || 5000;
+        // Health Check Route
+        app.get("/", (req, res) => {
+            res.status(200).json({
+                success: true,
+                message: "Server is stable and live 🚀",
+            });
+        });
 
-    app.listen(appPort, "0.0.0.0", () => {
-        console.log(`✔😎 Server is perfectly running on port ${appPort}`);
-    });
+        // Global Error Handler
+        app.use(GlobalErrorHandler);
+
+        // Railway Dynamic Port
+        const appPort = process.env.PORT || 5000;
+
+        app.listen(appPort, "0.0.0.0", () => {
+            console.log(
+                `✔😎 Server is perfectly running on port ${appPort}`
+            );
+        });
+
+    } catch (error) {
+        console.error("BOOTSTRAP ERROR:", error);
+    }
 };
