@@ -50,7 +50,7 @@ export const confirmEmail = {
 } 
 export const forgetPassword = {
     body: resendEmail.body.append({
-        otp: generalValidationFields.otp,
+        code: generalValidationFields.otp,
         password: generalValidationFields.password,
         confirmPassword: generalValidationFields.confirmPassword("password").required(),
 
