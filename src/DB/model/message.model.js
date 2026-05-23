@@ -21,4 +21,9 @@ const messageSchema = new mongoose.Schema({
     toObject: true,
     timestamps: true
 })
+
+messageSchema.pre(/^find/, function (next) {
+    this.find({ isHidden: { $ne: true } });
+    next();
+});
 export const messageModel = mongoose.models.Message || mongoose.model('Message', messageSchema)
