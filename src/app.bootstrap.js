@@ -44,13 +44,8 @@ export const bootstrap = async () => {
         res.send("Hello World! Server is stable and live. 🚀");
     });
 
-    // الراوت العشوائي لحماية التطبيق
-    // ✅ الصياغة الصحيحة والآمنة لجميع إصدارات Express
-    app.all("*", (req, res, next) => {
-        res.status(404).json({ message: 'invalid application Routing' });
-    });
+    
 
-    // معالج الأخطاء العالمي
     app.use(GlobalErrorHandler);
 
     // 💡 الحل الحاسم: قراءة بورت Railway الديناميكي أو الإجباري (5000) بشكل صحيح
