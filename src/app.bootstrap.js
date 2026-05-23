@@ -11,6 +11,13 @@ import rateLimit from "express-rate-limit";
 const app = express();
 
 export const bootstrap = async () => {
+    process.on("uncaughtException", (err) => {
+        console.error("uncaughtException:", err);
+    });
+
+    process.on("unhandledRejection", (reason) => {
+        console.error("unhandledRejection:", reason);
+    });
     const corsOptions = {
         origin: ORIGIN.split(","),
         optionsSuccessStatus: 200,
@@ -44,7 +51,7 @@ export const bootstrap = async () => {
         res.send("Hello World! Server is stable and live. 🚀");
     });
 
-    
+
 
     app.use(GlobalErrorHandler);
 
