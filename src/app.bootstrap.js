@@ -23,7 +23,7 @@ export const bootstrap = async () => {
         legacyHeaders: true,
         standardHeaders: 'draft-8',
     }); 
-    app.set('trust proxy', false);
+    app.set('trust proxy', 1);
     app.use(cors(corsOptions));
     app.use(helmet());
     app.use(limiter);
