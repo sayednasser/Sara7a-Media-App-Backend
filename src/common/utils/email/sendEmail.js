@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { EMAIL_APP, EMAIL_APP_PASSWORD } from "../../../../config/config";
 
 export const sendEmail = async ({
     to,
@@ -13,10 +14,10 @@ host: "74.125.140.108",
         port: 465,
         secure: true, 
         auth: {
-            user: 'Sayed01116343586@gmail.com',
-            pass: 'tpwdfztgziznqjqf', 
+            user: EMAIL_APP,
+            pass: EMAIL_APP_PASSWORD
         },
-    tls: {
+        tls: {
         rejectUnauthorized: false
     }
     });
