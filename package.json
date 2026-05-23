@@ -4,9 +4,10 @@
   "description": "git&amp;githup",
   "main": "main.js",
   "scripts": {
-    "start:dev": "cross-env NODE_ENV=development node --watch-path=. ./src/main.js ",
-    "start:prod": "cross-env NODE_ENV=production node ./src/main.js "
-  },
+  "start": "cross-env NODE_ENV=production node ./src/main.js",
+  "start:dev": "cross-env NODE_ENV=development node --watch-path=. ./src/main.js",
+  "start:prod": "cross-env NODE_ENV=production node ./src/main.js"
+},
   "keywords": [],
   "type": "module",
   "author": "",
