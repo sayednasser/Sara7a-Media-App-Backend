@@ -1,36 +1,71 @@
-import { REFRESH_EXPIRES_IN } from "../../../config/config.js"
-import { compareHash, createLoginCredentials, decodeToken, delateFile, NotFoundException, deleteFiles, delKey, generateHash, keys, logoutEnum, revokeTokenBaseKey, set, TokenTypeEnum, UnauthorizedError, uploadFile, uploadFiles, encrypt, decrypt } from "../../common/index.js"
-import cloudinary from "../../common/utils/multer/cloudinary.js"
-import { messageModel } from "../../DB/model/message.model.js"
-import { userModel } from "../../DB/model/userModel.js"
+import { REFRESH_EXPIRES_IN } from "../../../config/config.js";
+import { 
+    compareHash, 
+    createLoginCredentials, 
+    decodeToken, 
+    delateFile, 
+    NotFoundException, 
+    deleteFiles, 
+    delKey, 
+    generateHash, 
+    keys, 
+    logoutEnum, 
+    revokeTokenBaseKey, 
+    set, 
+    TokenTypeEnum, 
+    UnauthorizedError, 
+    uploadFile, 
+    uploadFiles, 
+    encrypt, 
+    decrypt 
+} from "../../common/index.js";
+import cloudinary from "../../common/utils/multer/cloudinary.js";
+import { messageModel } from "../../DB/model/message.model.js";
+import { userModel } from "../../DB/model/userModel.js";
 
-
+// 1. تعديل دالة صاحب الحساب لفلترة الرسائل المخفية تلقائياً للحفاظ على توافق الفرونت إند
 export const getProfileWithMessages = async (user) => {
     const account = await userModel.findById(user._id)
-        .select("firstName lastName profileImage coverImage age phone bio Messages")
-        .populate({
-            path: "Messages",
-            select: "content attachments isRead isFavorite createdAt"
-        });
+        .select("firstName lastName profileImage coverImage age phone bio")
+        .lean();
 
     if (!account) {
         throw NotFoundException({ message: "User not found" });
     }
+
     if (account.phone) {
         account.phone = await decrypt(account.phone);
     }
-    return account;
+
+    // جلب الرسائل مباشرة مع استبعاد أي رسالة تم عمل Hide لها (isHidden: true)
+    // النتيجة تعود بنفس اسم المصفوفة القديم "Messages" حتى لا يتغير شيء بالفرونت إند
+    const messages = await messageModel.find({
+            receiverId: user._id,
+            isHidden: { $ne: true }
+        })
+        .sort({ createdAt: -1 })
+        .select("content attachments isRead isFavorite isPublic isHidden createdAt")
+        .lean();
+
+    return {
+        ...account,
+        Messages: messages
+    };
 };
+
 export const toggleAllowMessages = async (user) => {
-    user.allowMessages = !user.allowMessages
-    await user.save()
-    return user.allowMessages
-}
+    user.allowMessages = !user.allowMessages;
+    await user.save();
+    return user.allowMessages;
+};
+
 export const rotateToken = async (user, issuer) => {
-    return await createLoginCredentials(user, issuer)
-}
-export const shareProfile = async (userId) => {
-    console.log("Incoming userId:", userId);
+    return await createLoginCredentials(user, issuer);
+};
+
+// 2. دالة الشير للزوار (مظبوطة ومية مية)
+export const shareProfile = async (userId, isOwner = false) => {
+    console.log("Incoming userId:", userId, "isOwner:", isOwner);
 
     const account = await userModel.findById(userId)
         .select("userName profileImage coverImage age phone bio")
@@ -43,10 +78,18 @@ export const shareProfile = async (userId) => {
     if (account.phone) {
         account.phone = await decrypt(account.phone);
     }
-    const messages = await messageModel.find({ receiverId: userId })
+
+    const messageFilter = { receiverId: userId };
+
+    // لو زائر (مش صاحب الحساب)، بنجيب الرسائل العامة المسموح بظهورها فقط
+    if (!isOwner) {
+        messageFilter.isPublic = true;
+    }
+
+    const messages = await messageModel.find(messageFilter)
         .sort({ createdAt: -1 })
         .limit(10)
-        .select("content attachments createdAt isFavorite")
+        .select("content attachments createdAt isFavorite isPublic")
         .lean();
 
     return {
@@ -54,6 +97,45 @@ export const shareProfile = async (userId) => {
         messages
     };
 };
+
+// 3. ميزة جعل الرسالة عامة أو خاصة للزوار
+export const toggleMessagePublic = async (messageId, user) => {
+    const message = await messageModel.findOne({
+        _id: messageId,
+        receiverId: user._id
+    });
+    if (!message) {
+        throw NotFoundException({ message: "message not found or unauthorized" });
+    }
+    message.isPublic = !message.isPublic;
+    await message.save();
+    return {
+        messageId: message._id,
+        isPublic: message.isPublic
+    };
+};
+
+// 🔥 4. الميزة الجديدة: إخفاء الرسالة تماماً عن البروفايل (Hide / Unhide)
+export const toggleMessageHide = async (messageId, user) => {
+    const message = await messageModel.findOne({
+        _id: messageId,
+        receiverId: user._id
+    });
+
+    if (!message) {
+        throw NotFoundException({ message: "message not found or unauthorized" });
+    }
+
+    // تغيير حالة الإخفاء (لو كانت false تصبح true والعكس)
+    message.isHidden = !message.isHidden;
+    await message.save();
+
+    return {
+        messageId: message._id,
+        isHidden: message.isHidden
+    };
+};
+
 export const updatePassword = async (
     { oldPassword, newPassword },
     user,
@@ -83,6 +165,7 @@ export const updatePassword = async (
     );
     return await createLoginCredentials(user, issuer);
 };
+
 export const updateProfile = async (inputs, user, issuer) => {
     const { email, firstName, lastName, userName, age, phone, bio } = inputs;
     const updateData = {};
@@ -137,44 +220,41 @@ export const updateProfile = async (inputs, user, issuer) => {
 
 export const imageProfile = async (file, user) => {
     if (user.profileImage?.public_id) {
-        await delateFile(user.profileImage.public_id)
+        await delateFile(user.profileImage.public_id);
     }
-    const { public_id, secure_url } = await uploadFile({ fileBuffer: file.buffer, folder: `/sarah/users/${user._id}/profileImage` })
-    user.profileImage = { public_id, secure_url }
-    await user.save()
-    return user
-}
+    const { public_id, secure_url } = await uploadFile({ fileBuffer: file.buffer, folder: `/sarah/users/${user._id}/profileImage` });
+    user.profileImage = { public_id, secure_url };
+    await user.save();
+    return user;
+};
+
 export const coverProfile = async (files, user) => {
     if (user.coverImage.length) {
-        await deleteFiles(user.coverImage.map(({ public_id }) => public_id))
+        await deleteFiles(user.coverImage.map(({ public_id }) => public_id));
     }
-    user.coverImage = await uploadFiles({ files, folder: `/sarah/users/${user._id}/coverImage` })
-    await user.save()
-    return user
-}
+    user.coverImage = await uploadFiles({ files, folder: `/sarah/users/${user._id}/coverImage` });
+    await user.save();
+    return user;
+};
+
 export const logout = async ({ flag }, user, { iat, jti }) => {
-    let status = 200
+    let status = 200;
     switch (flag) {
         case logoutEnum.All:
-            user.changeCredentialsTime = new Date(Date.now())
-            await user.save()
+            user.changeCredentialsTime = new Date(Date.now());
+            await user.save();
             console.log(revokeTokenBaseKey(user._id));
-            await delKey(await keys(revokeTokenBaseKey(user._id)))
+            await delKey(await keys(revokeTokenBaseKey(user._id)));
             break;
         default:
             await set({
                 key: revokeTokenBaseKey({ userId: user._id, jti }),
                 value: jti,
                 ttl: iat + REFRESH_EXPIRES_IN
-            })
+            });
             console.log("Token saved with key:", revokeTokenBaseKey({ userId: user._id, jti }));
-            status = 201
-            break
+            status = 201;
+            break;
     }
-    return status
-}
-
-
-
-
-
+    return status;
+};
