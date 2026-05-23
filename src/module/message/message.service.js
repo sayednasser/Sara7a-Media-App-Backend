@@ -44,7 +44,10 @@ export const getMessage = async (messageId, user) => {
 }
 export const listMessage = async (user) => {
     const message = await messageModel.find(
-        { receiverId: user._id }
+        {
+            receiverId: user._id,
+            isHidden: { $ne: true }
+        }
     ).select("-receiverId ")
 
     return message
