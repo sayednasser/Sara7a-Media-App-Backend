@@ -44,11 +44,16 @@ export const bootstrap = async () => {
     })
     app.use(GlobalErrorHandler)
     // 1️⃣ قراءة البورت الديناميكي الموفر من Railway، وإلا استخدام 5000 محلياً
-const PORT = process.env.PORT || 5000;
 
-// 2️⃣ تمرير البورت مع المضيف "0.0.0.0" وهو إلزامي في بيئات الـ Cloud لـ Railway
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`server is running on port ${PORT}`);
-});
+    const PORT = process.env.PORT || 5000;
+
+
+    // 2️⃣ تمرير البورت مع المضيف "0.0.0.0" وهو إلزامي في بيئات الـ Cloud لـ Railway
+
+    app.listen(PORT, "0.0.0.0", () => {
+
+        console.log(`server is running on port ${PORT}`);
+
+    });
 
 }
