@@ -25,7 +25,7 @@ export const generalValidationFields = {
             destination: joi.string(),
             filename: joi.string(),
             path: joi.string(),
-            buffer: joi.string(),
+            buffer: joi.any(),
             size: joi.number().positive()
         })
 
