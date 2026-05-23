@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { EMAIL_APP, EMAIL_APP_PASSWORD } from "../../../../config/config";
+import { EMAIL_APP, EMAIL_APP_PASSWORD } from "../../../../config/config.js";
 
 export const sendEmail = async ({
     to,
