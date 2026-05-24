@@ -135,11 +135,9 @@ npm run start:dev
 
 ```bash
 npm run start:prod
+```
 
----
-
----
-# 🌍 Deployment
+## 🌍 Deployment
 
 * Railway
 * MongoDB Atlas
