@@ -44,10 +44,12 @@ export const getMessage = async (messageId, user) => {
 }
 export const listMessage = async (user) => {
     const messages = await messageModel.find({
-        receiverId: user._id
+        receiverId: user._id,
+        isHidden: { $ne: true }
     })
     .select("content attachments isFavorite isPublic isHidden createdAt")
     .sort({ createdAt: -1 });
+
 
     return messages;
 }
