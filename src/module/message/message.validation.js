@@ -5,7 +5,7 @@ import { generalValidationFields } from "../../common/index.js";
 
 export const messageValidation = {
     body: Joi.object({
-        content: Joi.string(),
+        content: Joi.string().allow("").optional(),
         attachment: generalValidationFields.File,
     }),
     params: Joi.object({
