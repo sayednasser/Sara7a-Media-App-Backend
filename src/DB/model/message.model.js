@@ -10,6 +10,10 @@ const messageSchema = new mongoose.Schema({
         default: false
     },
     isPublic: { type: Boolean, default: true },
+    isHidden: { 
+        type: Boolean, 
+        default: false 
+    }
 
 
 
@@ -22,7 +26,7 @@ const messageSchema = new mongoose.Schema({
     timestamps: true
 })
 
-messageSchema.pre(/^find/, function () {
-    this.find({ isHidden: { $ne: true } });
-});
+// messageSchema.pre(/^find/, function () {
+//     this.find({ isHidden: { $ne: true } });
+// });
 export const messageModel = mongoose.models.Message || mongoose.model('Message', messageSchema)
