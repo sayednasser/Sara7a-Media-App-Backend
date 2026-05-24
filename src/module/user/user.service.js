@@ -1,23 +1,23 @@
 import { REFRESH_EXPIRES_IN } from "../../../config/config.js";
-import { 
-    compareHash, 
-    createLoginCredentials, 
-    decodeToken, 
-    delateFile, 
-    NotFoundException, 
-    deleteFiles, 
-    delKey, 
-    generateHash, 
-    keys, 
-    logoutEnum, 
-    revokeTokenBaseKey, 
-    set, 
-    TokenTypeEnum, 
-    UnauthorizedError, 
-    uploadFile, 
-    uploadFiles, 
-    encrypt, 
-    decrypt 
+import {
+    compareHash,
+    createLoginCredentials,
+    decodeToken,
+    delateFile,
+    NotFoundException,
+    deleteFiles,
+    delKey,
+    generateHash,
+    keys,
+    logoutEnum,
+    revokeTokenBaseKey,
+    set,
+    TokenTypeEnum,
+    UnauthorizedError,
+    uploadFile,
+    uploadFiles,
+    encrypt,
+    decrypt
 } from "../../common/index.js";
 import cloudinary from "../../common/utils/multer/cloudinary.js";
 import { messageModel } from "../../DB/model/message.model.js";
@@ -37,12 +37,12 @@ export const getProfileWithMessages = async (user) => {
         account.phone = await decrypt(account.phone);
     }
 
-   const messages = await messageModel.find({
-    receiverId: user._id
-})
-.sort({ createdAt: -1 })
-.select("content attachments isRead isFavorite isPublic isHidden createdAt")
-.lean();
+    const messages = await messageModel.find({
+        receiverId: user._id
+    })
+        .sort({ createdAt: -1 })
+        .select("content attachments isRead isFavorite isPublic isHidden createdAt")
+        .lean();
 
     return {
         ...account,
@@ -79,7 +79,7 @@ export const shareProfile = async (userId, isOwner = false) => {
 
     if (!isOwner) {
         messageFilter.isPublic = true;
-        messageFilter.isHidden = { $ne: true }; 
+        messageFilter.isHidden = { $ne: true };
     }
 
     const messages = await messageModel.find(messageFilter)
