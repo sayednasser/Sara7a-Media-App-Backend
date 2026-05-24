@@ -43,14 +43,13 @@ export const getMessage = async (messageId, user) => {
     return messageObj
 }
 export const listMessage = async (user) => {
-    const message = await messageModel.find(
-        {
-            receiverId: user._id,
-            isHidden: { $ne: true }
-        }
-    ).select("-receiverId ")
+    const messages = await messageModel.find({
+        receiverId: user._id
+    })
+    .select("content attachments isFavorite isPublic isHidden createdAt")
+    .sort({ createdAt: -1 });
 
-    return message
+    return messages;
 }
 export const deleteMessage = async (messageId, user) => {
     const message = await messageModel.findOneAndDelete({ _id: messageId, receiverId: user._id })
