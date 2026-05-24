@@ -19,7 +19,7 @@ export const messageValidation = {
 
 export const getMessage = {
     params: Joi.object({
-        messageId: Joi.string().required(),  
+        messageId: Joi.string().required(),
 
     })
 }
