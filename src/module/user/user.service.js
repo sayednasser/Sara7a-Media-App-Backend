@@ -37,15 +37,12 @@ export const getProfileWithMessages = async (user) => {
         account.phone = await decrypt(account.phone);
     }
 
-    // جلب الرسائل مباشرة مع استبعاد أي رسالة تم عمل Hide لها (isHidden: true)
-    // النتيجة تعود بنفس اسم المصفوفة القديم "Messages" حتى لا يتغير شيء بالفرونت إند
-    const messages = await messageModel.find({
-            receiverId: user._id,
-            isHidden: { $ne: true }
-        })
-        .sort({ createdAt: -1 })
-        .select("content attachments isRead isFavorite isPublic isHidden createdAt")
-        .lean();
+   const messages = await messageModel.find({
+    receiverId: user._id
+})
+.sort({ createdAt: -1 })
+.select("content attachments isRead isFavorite isPublic isHidden createdAt")
+.lean();
 
     return {
         ...account,
@@ -63,7 +60,6 @@ export const rotateToken = async (user, issuer) => {
     return await createLoginCredentials(user, issuer);
 };
 
-// 2. دالة الشير للزوار (مظبوطة ومية مية)
 export const shareProfile = async (userId, isOwner = false) => {
     console.log("Incoming userId:", userId, "isOwner:", isOwner);
 
@@ -81,18 +77,15 @@ export const shareProfile = async (userId, isOwner = false) => {
 
     const messageFilter = { receiverId: userId };
 
-    // هنا التعديل:
-    // إذا كان زائر (ليس المالك)، يجب ألا يرى الرسائل العامة فحسب، 
-    // بل يجب أيضاً أن يتأكد أن الرسالة غير مخفية (isHidden: { $ne: true })
     if (!isOwner) {
         messageFilter.isPublic = true;
-        messageFilter.isHidden = { $ne: true }; // 🔥 أضف هذا السطر
+        messageFilter.isHidden = { $ne: true }; 
     }
 
     const messages = await messageModel.find(messageFilter)
         .sort({ createdAt: -1 })
         .limit(10)
-        .select("content attachments createdAt isFavorite isPublic isHidden") // تأكد أن isHidden موجودة
+        .select("content attachments createdAt isFavorite isPublic isHidden")
         .lean();
 
     return {
@@ -101,7 +94,6 @@ export const shareProfile = async (userId, isOwner = false) => {
     };
 };
 
-// 3. ميزة جعل الرسالة عامة أو خاصة للزوار
 export const toggleMessagePublic = async (messageId, user) => {
     const message = await messageModel.findOne({
         _id: messageId,
@@ -118,7 +110,7 @@ export const toggleMessagePublic = async (messageId, user) => {
     };
 };
 
-// 🔥 4. الميزة الجديدة: إخفاء الرسالة تماماً عن البروفايل (Hide / Unhide)
+
 export const toggleMessageHide = async (messageId, user) => {
     const message = await messageModel.findOne({
         _id: messageId,
