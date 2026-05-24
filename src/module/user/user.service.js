@@ -81,15 +81,18 @@ export const shareProfile = async (userId, isOwner = false) => {
 
     const messageFilter = { receiverId: userId };
 
-    // لو زائر (مش صاحب الحساب)، بنجيب الرسائل العامة المسموح بظهورها فقط
+    // هنا التعديل:
+    // إذا كان زائر (ليس المالك)، يجب ألا يرى الرسائل العامة فحسب، 
+    // بل يجب أيضاً أن يتأكد أن الرسالة غير مخفية (isHidden: { $ne: true })
     if (!isOwner) {
         messageFilter.isPublic = true;
+        messageFilter.isHidden = { $ne: true }; // 🔥 أضف هذا السطر
     }
 
     const messages = await messageModel.find(messageFilter)
         .sort({ createdAt: -1 })
         .limit(10)
-        .select("content attachments createdAt isFavorite isPublic")
+        .select("content attachments createdAt isFavorite isPublic isHidden") // تأكد أن isHidden موجودة
         .lean();
 
     return {
@@ -126,7 +129,6 @@ export const toggleMessageHide = async (messageId, user) => {
         throw NotFoundException({ message: "message not found or unauthorized" });
     }
 
-    // تغيير حالة الإخفاء (لو كانت false تصبح true والعكس)
     message.isHidden = !message.isHidden;
     await message.save();
 
