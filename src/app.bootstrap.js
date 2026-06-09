@@ -110,22 +110,18 @@ export const bootstrap = async () => {
 
         app.set("trust proxy", 1);
 
-        // Middlewares
         app.use(cors(corsOptions));
         app.use(helmet());
         app.use(limiter);
         app.use(express.json());
 
-        // Database Connections
         await connectionDB();
         await connectionRedis();
 
-        // Routes
         app.use("/user", userRouter);
         app.use("/message", messageRouter);
         app.use("/auth", authRouter);
 
-        // Health Check Route
         app.get("/", (req, res) => {
             res.status(200).json({
                 success: true,
@@ -133,11 +129,8 @@ export const bootstrap = async () => {
             });
         });
 
-        // Global Error Handler
         app.use(GlobalErrorHandler);
-
-        // Railway Dynamic Port
-        const appPort = process.env.PORT || 5000;
+       const appPort = process.env.PORT || 5000;
 
         app.listen(appPort, "0.0.0.0", () => {
             console.log(

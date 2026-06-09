@@ -24,18 +24,54 @@ import { messageModel } from "../../DB/model/message.model.js";
 import { userModel } from "../../DB/model/userModel.js";
 
 // 1. تعديل دالة صاحب الحساب لفلترة الرسائل المخفية تلقائياً للحفاظ على توافق الفرونت إند
+// export const getProfileWithMessages = async (user) => {
+//     const account = await userModel.findById(user._id)
+//         .select("firstName lastName profileImage coverImage age phone bio")
+//         .lean();
+
+//     if (!account) {
+//         throw NotFoundException({ message: "User not found" });
+//     }
+
+//     if (account.phone) {
+//         account.phone = await decrypt(account.phone);
+//     }
+
+//     const messages = await messageModel.find({
+//         receiverId: user._id
+//     })
+//         .sort({ createdAt: -1 })
+//         .select("content attachments isRead isFavorite isPublic isHidden createdAt")
+//         .lean();
+
+//     return {
+//         ...account,
+//         Messages: messages
+//     };
+// };
 export const getProfileWithMessages = async (user) => {
+    console.log("STEP 1 - Start");
+
     const account = await userModel.findById(user._id)
         .select("firstName lastName profileImage coverImage age phone bio")
         .lean();
 
+    console.log("STEP 2 - Account Loaded");
+
     if (!account) {
+        console.log("STEP 2.1 - Account Not Found");
         throw NotFoundException({ message: "User not found" });
     }
 
     if (account.phone) {
+        console.log("STEP 3 - Before Decrypt");
+
         account.phone = await decrypt(account.phone);
+
+        console.log("STEP 4 - After Decrypt");
     }
+
+    console.log("STEP 5 - Before Messages Query");
 
     const messages = await messageModel.find({
         receiverId: user._id
@@ -44,10 +80,16 @@ export const getProfileWithMessages = async (user) => {
         .select("content attachments isRead isFavorite isPublic isHidden createdAt")
         .lean();
 
-    return {
+    console.log("STEP 6 - Messages Loaded", messages.length);
+
+    const result = {
         ...account,
         Messages: messages
     };
+
+    console.log("STEP 7 - Before Return");
+
+    return result;
 };
 
 export const toggleAllowMessages = async (user) => {

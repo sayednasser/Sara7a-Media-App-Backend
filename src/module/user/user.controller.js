@@ -33,7 +33,6 @@ router.patch("/toggle-message-public", authentication(), async (req, res, next) 
     return successRequest({ res, data: result });
 });
 
-// 🔥 الـ Route الجديد الخاص بميزة إخفاء الرسائل
 router.patch("/toggle-message-hide", authentication(), async (req, res, next) => {
     const result = await toggleMessageHide(req.body.messageId, req.user);
     return successRequest({ res, data: result });

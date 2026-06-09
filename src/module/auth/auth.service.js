@@ -59,7 +59,6 @@ export const confirmEmail = async (inputs) => {
     if (!checkAccount) {
         throw NotFoundException({ message: "user not found or is confirmed" })
     }
-    console.log({ hashOtp, code });
     if (!await compareHash({ plainText: code, hashText: hashOtp })) {
         throw conflictRequestError({ message: "invalid otp" })
     }
@@ -96,7 +95,6 @@ export const forgetPassword = async (inputs) => {
 export const verifyEmail = async (inputs) => {
     const { email, code } = inputs
     const hashOtp = await get(otpKey({ email, subject: emailEnum.forgotPassword }))
-    console.log("HASH OTP =>", hashOtp)
 
     if (!hashOtp) {
         throw BadRequestError({ message: "otp expired" })
